@@ -50,6 +50,10 @@ int initSemsSuccessAssertion(
     int is_created = FALSE;
     *sem_a = sem_open(sem_a_name, O_CREAT | O_EXCL, S_IRWXU, value_a);
     if (*sem_a == SEM_FAILED){
+        /*
+            semaphore already exists ->
+            this is second process
+        */
         if (errno == EEXIST){
             is_created = TRUE;
             *sem_a = sem_open(sem_a_name, O_CREAT, S_IRWXU, value_a);
@@ -101,7 +105,7 @@ void semUnlinkSuccessAssertion(const char *sem_name, const char *err_msg){
 }
 /*
     set to removing semaphores
-    if kill process
+    if kill process [mainly for debugging]
 */
 void sigcath(){
     sem_unlink(SEM_A_NAME);
@@ -139,6 +143,11 @@ int main(int argc, char **argv){
     for (int i = 0; i < PRINT_CNT; ++i)
         iteration(sem_post, sem_wait, is_created == TRUE ? THREAD_MSG : MAIN_MSG, "main");
         
+    /*
+        make only second process
+        call sem_unlink to not to
+        cause errors in assertSuccess
+    */
     if (is_created){
         semUnlinkSuccessAssertion(SEM_A_NAME, "semUnlink");
         semUnlinkSuccessAssertion(SEM_B_NAME, "semUnlink");
